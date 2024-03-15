@@ -2,7 +2,7 @@
   "name": "nodejs-chat",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "Henrique",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -20,12 +20,16 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@nestjs/common": "^10.0.0",
-    "@nestjs/core": "^10.0.0",
-    "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/common": "^10.3.3",
+    "@nestjs/core": "^10.3.3",
+    "@nestjs/platform-express": "^10.3.3",
+    "@nestjs/platform-socket.io": "^10.3.3",
+    "@nestjs/websockets": "^10.3.3",
+    "@types/socket.io": "^3.0.2",
     "express": "^4.18.3",
     "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "socket.io": "^4.7.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
