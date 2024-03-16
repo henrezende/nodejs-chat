@@ -1,8 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import io from "socket.io-client";
-
-const socket = io("http://localhost:3000");
+import io, { Socket } from "socket.io-client";
 
 export default function Home() {
   const [messages, setMessages] = useState<
@@ -10,20 +8,34 @@ export default function Home() {
   >([]);
   const [inputText, setInputText] = useState("");
   const [username, setUsername] = useState("");
+  const [userList, setUserList] = useState([]);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const username = prompt("Enter your username:");
-    if (username) setUsername(username);
-  }, []);
+    const getUsernameAndConnect = async () => {
+      const username = prompt("Digite seu nome:");
+      if (!username) return;
+      setUsername(username);
+      const socketWithUser = io("http://localhost:3000", {
+        query: { username },
+      });
 
-  useEffect(() => {
-    socket.on("message", (message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
-    });
+      socketWithUser.on("userListUpdate", (updatedUserList) => {
+        setUserList(updatedUserList);
+      });
 
-    return () => {
-      socket.disconnect();
+      socketWithUser.on("message", (message) => {
+        setMessages((prevMessages) => [...prevMessages, message]);
+      });
+
+      setSocket(socketWithUser);
+
+      return () => {
+        socketWithUser.disconnect();
+      };
     };
+
+    getUsernameAndConnect();
   }, []);
 
   const sendMessage = () => {
@@ -33,8 +45,7 @@ export default function Home() {
       text: inputText.trim(),
       timestamp: new Date().toISOString(),
     };
-    console.log("message", message);
-    socket.emit("message", message);
+    socket?.emit("message", message);
     setInputText("");
   };
 
@@ -75,8 +86,21 @@ export default function Home() {
           )}
         </div>
 
-        <div className={"flex w-1/4 h-full py-8"}>
-          <div className={"bg-slate-200 rounded-lg h-full w-full"}></div>
+        <div
+          className={"flex flex-col w-1/4 bg-slate-200 rounded-lg my-8 pr-2"}
+        >
+          <h2 className={"font-bold text-violet-900 p-4"}>
+            Usuários conectados
+          </h2>
+          <div className={"px-4 pb-4 h-full w-full overflow-auto "}>
+            <ul>
+              {userList.map((user, index) => (
+                <li key={index} className={"font-medium"}>
+                  {user}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
