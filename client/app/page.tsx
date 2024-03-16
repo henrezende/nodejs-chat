@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import io, { Socket } from "socket.io-client";
 
 export default function Home() {
@@ -10,11 +10,13 @@ export default function Home() {
   const [username, setUsername] = useState("");
   const [userList, setUserList] = useState([]);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const getUsernameAndConnect = async () => {
-      const username = prompt("Digite seu nome:");
-      if (!username) return;
+      let username = prompt("Digite seu nome:");
+      if (!username) username = "Anônimo";
+
       setUsername(username);
       const socketWithUser = io("http://localhost:3000", {
         query: { username },
@@ -26,6 +28,12 @@ export default function Home() {
 
       socketWithUser.on("message", (message) => {
         setMessages((prevMessages) => [...prevMessages, message]);
+      });
+
+      socketWithUser.on("validatedUsername", (validatedUser) => {
+        if (validatedUser.id === socketWithUser.id) {
+          setUsername(validatedUser.name);
+        }
       });
 
       setSocket(socketWithUser);
@@ -47,6 +55,7 @@ export default function Home() {
     };
     socket?.emit("message", message);
     setInputText("");
+    inputRef.current?.focus();
   };
 
   const isMessageFromCurrentUser = (message) => {
@@ -66,7 +75,7 @@ export default function Home() {
               <div
                 key={index}
                 className={
-                  "p-2 bg-slate-200 rounded-lg my-2 w-fit self-end flex-col flex"
+                  "p-2 bg-slate-200 rounded-lg my-2 w-fit self-end flex-col flex text-wrap max-w-baloon"
                 }
               >
                 <strong>Você: </strong>
@@ -76,7 +85,7 @@ export default function Home() {
               <div
                 key={index}
                 className={
-                  "p-2 bg-violet-400 rounded-lg my-2 w-fit flex-col flex"
+                  "p-2 bg-violet-400 rounded-lg my-2 w-fit flex-col flex text-wrap max-w-baloon"
                 }
               >
                 <strong>{message.username}: </strong>
@@ -95,7 +104,12 @@ export default function Home() {
           <div className={"px-4 pb-4 h-full w-full overflow-auto "}>
             <ul>
               {userList.map((user, index) => (
-                <li key={index} className={"font-medium"}>
+                <li
+                  key={index}
+                  className={`${
+                    user === username ? "font-extrabold" : "font-medium"
+                  }`}
+                >
                   {user}
                 </li>
               ))}
@@ -111,6 +125,9 @@ export default function Home() {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Digite uma mensagem..."
+          onKeyDown={(e) => (e.key === "Enter" ? sendMessage() : null)}
+          ref={inputRef}
+          autoFocus
         />
         <button
           className={
