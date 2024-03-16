@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import io, { Socket } from "socket.io-client";
+import { IMessage } from "./interfaces";
 
 export default function Home() {
   const [messages, setMessages] = useState<
@@ -8,7 +9,7 @@ export default function Home() {
   >([]);
   const [inputText, setInputText] = useState("");
   const [username, setUsername] = useState("");
-  const [userList, setUserList] = useState([]);
+  const [userList, setUserList] = useState<string[]>([]);
   const [socket, setSocket] = useState<Socket | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -22,7 +23,7 @@ export default function Home() {
         query: { username },
       });
 
-      socketWithUser.on("userListUpdate", (updatedUserList) => {
+      socketWithUser.on("userListUpdate", (updatedUserList: string[]) => {
         setUserList(updatedUserList);
       });
 
@@ -46,7 +47,7 @@ export default function Home() {
     getUsernameAndConnect();
   }, []);
 
-  const sendMessage = () => {
+  const sendMessage = (): void => {
     if (inputText.trim() === "") return;
     const message = {
       username,
@@ -58,8 +59,20 @@ export default function Home() {
     inputRef.current?.focus();
   };
 
-  const isMessageFromCurrentUser = (message) => {
+  const isMessageFromCurrentUser = (message: IMessage): boolean => {
     return message.username === username;
+  };
+
+  const formatTimestamp = (timestamp: string): string => {
+    const date = new Date(timestamp);
+
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = String(date.getFullYear()).slice(2);
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
   return (
@@ -75,21 +88,35 @@ export default function Home() {
               <div
                 key={index}
                 className={
-                  "p-2 bg-slate-200 rounded-lg my-2 w-fit self-end flex-col flex text-wrap max-w-baloon"
+                  "p-2 bg-slate-200 rounded-lg my-2 w-fit self-end flex-col flex text-wrap max-w-baloon drop-shadow-xl"
                 }
               >
                 <strong>Você: </strong>
                 {message.text}
+                <span
+                  className={
+                    "opacity-50	font-semibold text-xs text-violet-800 text-right pt-2 drop-shadow"
+                  }
+                >
+                  {formatTimestamp(message.timestamp)}
+                </span>
               </div>
             ) : (
               <div
                 key={index}
                 className={
-                  "p-2 bg-violet-400 rounded-lg my-2 w-fit flex-col flex text-wrap max-w-baloon"
+                  "p-2 bg-violet-400 rounded-lg my-2 w-fit flex-col flex text-wrap max-w-baloon drop-shadow-xl"
                 }
               >
                 <strong>{message.username}: </strong>
                 {message.text}
+                <span
+                  className={
+                    "opacity-50	font-semibold text-xs text-violet-800 text-right pt-2 drop-shadow"
+                  }
+                >
+                  {formatTimestamp(message.timestamp)}
+                </span>
               </div>
             )
           )}
