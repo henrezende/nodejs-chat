@@ -1,0 +1,38 @@
+version: "3"
+
+services:
+  server:
+    container_name: server
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  client:
+    container_name: client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - server
+    volumes:
+      - .:/usr/src/app
+      - /node_modules
+      - /.next
+
+  db:
+    container_name: db
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: chatdb
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpassword
+    ports:
+      - "3306:3306"
