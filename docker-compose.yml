@@ -3,16 +3,25 @@ version: "3"
 services:
   server:
     container_name: server
+    restart: unless-stopped
     build:
       context: ./server
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    volumes:
+      - ./server/.:/usr/src/app
+      - /node_modules
+    networks:
+      - chat-network
 
   client:
     container_name: client
+    stdin_open: true
+    restart: always
     build:
       context: ./client
       dockerfile: Dockerfile
@@ -21,18 +30,36 @@ services:
     depends_on:
       - server
     volumes:
-      - .:/usr/src/app
+      - ./client/:/usr/src/app
       - /node_modules
       - /.next
+    networks:
+      - chat-network
 
   db:
     container_name: db
     image: mysql:latest
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: chatdb
-      MYSQL_USER: testuser
-      MYSQL_PASSWORD: testpassword
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+    healthcheck:
+      test: ["CMD", "mysql", "-u", "admin", "-padmin", "-e", "USE chatdb;"]
+      retries: 3
     ports:
       - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql/
+      - ./server/mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - chat-network
+
+networks:
+  chat-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
