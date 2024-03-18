@@ -27,8 +27,12 @@ export default function Home() {
         setUserList(updatedUserList);
       });
 
-      socketWithUser.on("message", (message) => {
+      socketWithUser.on("recMessage", (message) => {
         setMessages((prevMessages) => [...prevMessages, message]);
+      });
+
+      socketWithUser.on("recMessageHistory", (messageHistory) => {
+        setMessages(messageHistory);
       });
 
       socketWithUser.on("validatedUsername", (validatedUser) => {
@@ -37,6 +41,7 @@ export default function Home() {
         }
       });
 
+      socketWithUser.emit("getMessageHistory");
       setSocket(socketWithUser);
 
       return () => {
@@ -54,7 +59,7 @@ export default function Home() {
       text: inputText.trim(),
       timestamp: new Date().toISOString(),
     };
-    socket?.emit("message", message);
+    socket?.emit("sendMessage", message);
     setInputText("");
     inputRef.current?.focus();
   };
